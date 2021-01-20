@@ -40,6 +40,8 @@ struct snake {
     uint16_t head_color;
     uint16_t body_color;
 
+    float length;
+
     vector<body_part> body;
 };
 
@@ -108,8 +110,18 @@ bool update() {
         }
         s->pos=new_pos;
 
-        for(body_part bp : s->body)
-            tb_change_cell(bp.pos.x, bp.pos.y, '#', s->body_color, BACKGROUND);
+        for(int i = s->body.size() - 1; i >= 0; i--) {
+            
+
+            body_part bp = s->body[i];
+            if(duration_cast<milliseconds>(this_update - bp.time).count() > 1000.0f * s->length) {
+                s->body.erase(s->body.begin() + i--);
+            } else {
+                tb_change_cell(bp.pos.x, bp.pos.y, '#', s->body_color, BACKGROUND);
+            }
+           
+        }
+           
         tb_change_cell(s->pos.x, s->pos.y, '#', s->head_color, BACKGROUND);
     }
 
@@ -149,6 +161,9 @@ int main() {
 
     player1.body_color = TB_YELLOW;
     player2.head_color = TB_MAGENTA;
+
+    player1.length = 0.5f;
+    player2.length = 0.5f;
 
     last_update = steady_clock::now();
     while(process_input() && update()) {
