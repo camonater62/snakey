@@ -94,6 +94,7 @@ bool update() {
             case LEFT:  new_pos.x -= 2 * dt * BASE_SPEED; break;
             case RIGHT: new_pos.x += 2 * dt * BASE_SPEED; break;
         }
+        
 
         point p = {s->pos.x, s->pos.y};
         while( (int)p.x != (int)new_pos.x || (int)p.y != (int)new_pos.y ) {
@@ -105,6 +106,7 @@ bool update() {
             }
             s->body.push_back( {p, this_update} );
         }
+        s->pos=new_pos;
 
         for(body_part bp : s->body)
             tb_change_cell(bp.pos.x, bp.pos.y, '#', s->body_color, BACKGROUND);
