@@ -7,11 +7,14 @@
 using namespace std;
 using namespace chrono;
 
-const float    BASE_SPEED = 30.0f;
-const float    BOOST_MOD  = 3.0f;
-const int      FOOD_VALUE = 10;
+const float    BASE_SPEED  = 30.0f;
+const float    BOOST_MOD   = 3.0f;
+const float    FRUIT_VALUE = 0.1f;
+const int      NUM_FRUITS  = 2;
+const float    MIN_LENGTH  = 0.25;
 
-const uint16_t BACKGROUND = TB_DEFAULT;
+const uint16_t FRUIT_COLOR = TB_RED;
+const uint16_t BACKGROUND  = TB_BLACK;
 
 enum direction {
     UP,
@@ -30,6 +33,11 @@ struct body_part {
     point pos;
     time_point<steady_clock> time;
 };
+
+struct fruit {
+    point pos;
+};
+vector<fruit> fruits;
 
 struct snake {
     point pos;
@@ -96,8 +104,15 @@ bool update() {
     for(snake * s : {&player1, &player2}) {
         point new_pos = {s->pos.x, s->pos.y};
         float speed = dt * BASE_SPEED;
-        if(s->boost) 
-            speed *= BOOST_MOD;
+        if(s->boost) {
+            if(s->length > MIN_LENGTH) {
+                speed *= BOOST_MOD;
+                s->length -= 2 * dt;
+            } else {
+                s->boost = false;
+            }
+            
+        }
 
         switch(s->d) {
             case UP:    new_pos.y -= 1 * speed; break;
@@ -128,6 +143,15 @@ bool update() {
         }
         s->pos=new_pos;
 
+        for(int i = 0; i < fruits.size(); i++) {
+            fruit f = fruits[i];
+            if(int(s->pos.x) == int(f.pos.x) && int(s->pos.y) == int(f.pos.y)) {
+                s->length += FRUIT_VALUE;
+                fruits.erase(fruits.begin() + i--);
+            }
+        }
+        
+
         for(int i = s->body.size() - 1; i >= 0; i--) {
             body_part bp = s->body[i];
             if(duration_cast<milliseconds>(this_update - bp.time).count() > 1000.0f * s->length) {
@@ -139,6 +163,14 @@ bool update() {
         }
            
         tb_change_cell(s->pos.x, s->pos.y, '#', s->head_color, BACKGROUND);
+    }
+
+    while(fruits.size() < NUM_FRUITS) {
+        fruit f = { { float(rand() % tb_width()), float(rand() % tb_height()) } };
+        fruits.push_back(f);
+    }
+    for(fruit f : fruits) {
+        tb_change_cell(f.pos.x, f.pos.y, '#', FRUIT_COLOR, BACKGROUND);
     }
 
     tb_present();
@@ -174,8 +206,8 @@ int main() {
     player1.pos = p_p1;
     player2.pos = p_p2;
 
-    player1.head_color = TB_RED;
-    player1.body_color = TB_YELLOW;
+    player1.head_color = TB_YELLOW;
+    player1.body_color = TB_GREEN;
 
     player2.head_color = TB_CYAN;
     player2.body_color = TB_MAGENTA;
