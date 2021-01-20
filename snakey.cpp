@@ -7,17 +7,18 @@
 using namespace std;
 using namespace chrono;
 
-const float    BASE_SPEED  = 30.0f;
-const float    BOOST_SPEED = 60.0f;
-const int      FOOD_VALUE  = 10;
+const float    BASE_SPEED = 30.0f;
+const float    BOOST_MOD  = 3.0f;
+const int      FOOD_VALUE = 10;
 
-const uint16_t BACKGROUND  = TB_DEFAULT;
+const uint16_t BACKGROUND = TB_DEFAULT;
 
 enum direction {
     UP,
     LEFT,
     DOWN,
     RIGHT,
+    BOOST,
 };
 
 struct point {
@@ -34,6 +35,7 @@ struct snake {
     point pos;
 
     direction d;
+    bool boost;
 
     map<direction, char> controls;
 
@@ -66,10 +68,13 @@ bool process_input() {
                 return false;
             }
 
-            for(direction d : {UP, DOWN, LEFT, RIGHT}) {
-                for(snake * s : {&player1, &player2})
+            for(snake * s : {&player1, &player2}) {
+                for(direction d : {UP, DOWN, LEFT, RIGHT}) {
                     if(s->controls[d] == c)
                         s->d = d;
+                }
+                if(s->controls[BOOST] == c)
+                    s->boost = !s->boost;
             }
 
         } else if(event.type == TB_EVENT_RESIZE) {
@@ -90,13 +95,16 @@ bool update() {
 
     for(snake * s : {&player1, &player2}) {
         point new_pos = {s->pos.x, s->pos.y};
+        float speed = dt * BASE_SPEED;
+        if(s->boost) 
+            speed *= BOOST_MOD;
+
         switch(s->d) {
-            case UP:    new_pos.y -= 1 * dt * BASE_SPEED; break;
-            case DOWN:  new_pos.y += 1 * dt * BASE_SPEED; break;
-            case LEFT:  new_pos.x -= 2 * dt * BASE_SPEED; break;
-            case RIGHT: new_pos.x += 2 * dt * BASE_SPEED; break;
+            case UP:    new_pos.y -= 1 * speed; break;
+            case DOWN:  new_pos.y += 1 * speed; break;
+            case LEFT:  new_pos.x -= 2 * speed; break;
+            case RIGHT: new_pos.x += 2 * speed; break;
         }
-        
 
         point p = {s->pos.x, s->pos.y};
         while( (int)p.x != (int)new_pos.x || (int)p.y != (int)new_pos.y ) {
@@ -111,8 +119,6 @@ bool update() {
         s->pos=new_pos;
 
         for(int i = s->body.size() - 1; i >= 0; i--) {
-            
-
             body_part bp = s->body[i];
             if(duration_cast<milliseconds>(this_update - bp.time).count() > 1000.0f * s->length) {
                 s->body.erase(s->body.begin() + i--);
@@ -135,6 +141,7 @@ int main() {
     player1.controls[LEFT]  = 'a';
     player1.controls[DOWN]  = 's';
     player1.controls[RIGHT] = 'd';
+    player1.controls[BOOST] = 'r';
 
     player1.d = RIGHT;
 
@@ -142,6 +149,7 @@ int main() {
     player2.controls[LEFT]  = 'j';
     player2.controls[DOWN]  = 'k';
     player2.controls[RIGHT] = 'l';
+    player2.controls[BOOST] = 'u';
 
     player2.d = LEFT;
 
@@ -157,10 +165,10 @@ int main() {
     player2.pos = p_p2;
 
     player1.head_color = TB_RED;
-    player2.head_color = TB_BLUE;
-
     player1.body_color = TB_YELLOW;
-    player2.head_color = TB_MAGENTA;
+
+    player2.head_color = TB_CYAN;
+    player2.body_color = TB_MAGENTA;
 
     player1.length = 0.5f;
     player2.length = 0.5f;
