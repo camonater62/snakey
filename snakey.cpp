@@ -8,7 +8,7 @@ using namespace std;
 using namespace chrono;
 
 const float    BASE_SPEED  = 30.0f;
-const float    BOOST_MOD   = 3.0f;
+const float    BOOST_MOD   = 4.0f;
 const float    FRUIT_VALUE = 0.1f;
 const int      NUM_FRUITS  = 2;
 const float    MIN_LENGTH  = 0.25;
@@ -21,7 +21,7 @@ enum direction {
     LEFT,
     DOWN,
     RIGHT,
-    BOOST,
+    BOOST,      // not really a direction ¯\_(ツ)_/¯
 };
 
 struct point {
@@ -58,6 +58,51 @@ struct snake {
 snake player1;
 snake player2;
 
+time_point<steady_clock> last_update;
+void reset() {
+    float width  = (float)tb_width();
+    float height = (float)tb_height();
+
+    point p_p1 = { width / 3,     height / 2};
+    point p_p2 = { 3 * width / 4, height / 2 };
+
+    player1.pos = p_p1;
+    player2.pos = p_p2;
+
+    player1.length = 0.5f;
+    player2.length = 0.5f;
+
+    last_update = steady_clock::now();
+}
+
+void init() {
+    srand(time(NULL));
+
+    player1.controls[UP]    = 'w';
+    player1.controls[LEFT]  = 'a';
+    player1.controls[DOWN]  = 's';
+    player1.controls[RIGHT] = 'd';
+    player1.controls[BOOST] = 'r';
+
+    player1.d = RIGHT;
+
+    player2.controls[UP]    = 'i';
+    player2.controls[LEFT]  = 'j';
+    player2.controls[DOWN]  = 'k';
+    player2.controls[RIGHT] = 'l';
+    player2.controls[BOOST] = 'u';
+
+    player2.d = LEFT;
+
+    player1.head_color = TB_YELLOW;
+    player1.body_color = TB_GREEN;
+
+    player2.head_color = TB_CYAN;
+    player2.body_color = TB_MAGENTA;
+
+    reset();
+}
+
 bool process_input() {
     tb_event event;
 
@@ -74,6 +119,10 @@ bool process_input() {
 
             if(key == TB_KEY_ESC || key == TB_KEY_CTRL_C) {
                 return false;
+            }
+
+            if(key == TB_KEY_END) {
+                reset();
             }
 
             for(snake * s : {&player1, &player2}) {
@@ -93,7 +142,6 @@ bool process_input() {
     return true;
 }
 
-time_point<steady_clock> last_update;
 bool update() {
     tb_clear();
 
@@ -107,7 +155,7 @@ bool update() {
         if(s->boost) {
             if(s->length > MIN_LENGTH) {
                 speed *= BOOST_MOD;
-                s->length -= 2 * dt;
+                s->length -= dt;
             } else {
                 s->boost = false;
             }
@@ -150,7 +198,6 @@ bool update() {
                 fruits.erase(fruits.begin() + i--);
             }
         }
-        
 
         for(int i = s->body.size() - 1; i >= 0; i--) {
             body_part bp = s->body[i];
@@ -173,53 +220,15 @@ bool update() {
         tb_change_cell(f.pos.x, f.pos.y, '#', FRUIT_COLOR, BACKGROUND);
     }
 
-    tb_present();
-
     return true;
 }
 
 int main() {
-    player1.controls[UP]    = 'w';
-    player1.controls[LEFT]  = 'a';
-    player1.controls[DOWN]  = 's';
-    player1.controls[RIGHT] = 'd';
-    player1.controls[BOOST] = 'r';
-
-    player1.d = RIGHT;
-
-    player2.controls[UP]    = 'i';
-    player2.controls[LEFT]  = 'j';
-    player2.controls[DOWN]  = 'k';
-    player2.controls[RIGHT] = 'l';
-    player2.controls[BOOST] = 'u';
-
-    player2.d = LEFT;
-
     tb_init();
-
-    float width  = (float)tb_width();
-    float height = (float)tb_height();
-
-    point p_p1 = { width / 3,     height / 2};
-    point p_p2 = { 3 * width / 4, height / 2 };
-
-    player1.pos = p_p1;
-    player2.pos = p_p2;
-
-    player1.head_color = TB_YELLOW;
-    player1.body_color = TB_GREEN;
-
-    player2.head_color = TB_CYAN;
-    player2.body_color = TB_MAGENTA;
-
-    player1.length = 0.5f;
-    player2.length = 0.5f;
-
-    last_update = steady_clock::now();
+    init();
     while(process_input() && update()) {
-        // keep running until error or exit
+        tb_present();
     }
-
     tb_shutdown();
 
     return 0;
