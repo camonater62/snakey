@@ -25,6 +25,11 @@ struct point {
     float y;
 };
 
+struct body_part {
+    point pos;
+    time_point<steady_clock> time;
+};
+
 struct snake {
     point pos;
 
@@ -35,7 +40,7 @@ struct snake {
     uint16_t head_color;
     uint16_t body_color;
 
-    vector<point> body;
+    vector<body_part> body;
 };
 
 snake player1;
@@ -82,13 +87,27 @@ bool update() {
     last_update = this_update;
 
     for(snake * s : {&player1, &player2}) {
+        point new_pos = {s->pos.x, s->pos.y};
         switch(s->d) {
-            case UP:    s->pos.y -= 1 * dt * BASE_SPEED; break;
-            case DOWN:  s->pos.y += 1 * dt * BASE_SPEED; break;
-            case LEFT:  s->pos.x -= 2 * dt * BASE_SPEED; break;
-            case RIGHT: s->pos.x += 2 * dt * BASE_SPEED; break;
+            case UP:    new_pos.y -= 1 * dt * BASE_SPEED; break;
+            case DOWN:  new_pos.y += 1 * dt * BASE_SPEED; break;
+            case LEFT:  new_pos.x -= 2 * dt * BASE_SPEED; break;
+            case RIGHT: new_pos.x += 2 * dt * BASE_SPEED; break;
         }
 
+        point p = {s->pos.x, s->pos.y};
+        while( (int)p.x != (int)new_pos.x || (int)p.y != (int)new_pos.y ) {
+            switch(s->d) {
+                case UP:    p.y -= 1; break;
+                case DOWN:  p.y += 1; break;
+                case LEFT:  p.x -= 1; break;
+                case RIGHT: p.x += 1; break;
+            }
+            s->body.push_back( {p, this_update} );
+        }
+
+        for(body_part bp : s->body)
+            tb_change_cell(bp.pos.x, bp.pos.y, '#', s->body_color, BACKGROUND);
         tb_change_cell(s->pos.x, s->pos.y, '#', s->head_color, BACKGROUND);
     }
 
