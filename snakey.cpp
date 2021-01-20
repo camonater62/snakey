@@ -5,9 +5,10 @@
 #include <termbox.h>
 
 using namespace std;
+using namespace chrono;
 
-const float    BASE_SPEED  = 5.0f;
-const float    BOOST_SPEED = 15.0f;
+const float    BASE_SPEED  = 30.0f;
+const float    BOOST_SPEED = 60.0f;
 const int      FOOD_VALUE  = 10;
 
 const uint16_t BACKGROUND  = TB_DEFAULT;
@@ -43,7 +44,7 @@ snake player2;
 bool process_input() {
     tb_event event;
 
-    int val = tb_peek_event(&event, 25);
+    int val = tb_peek_event(&event, 1);
 
     if(val < 0) {
         return false;
@@ -60,9 +61,8 @@ bool process_input() {
 
             for(direction d : {UP, DOWN, LEFT, RIGHT}) {
                 for(snake * s : {&player1, &player2})
-                    if(s->controls[d] == c) {
+                    if(s->controls[d] == c)
                         s->d = d;
-                    }
             }
 
         } else if(event.type == TB_EVENT_RESIZE) {
@@ -73,16 +73,20 @@ bool process_input() {
     return true;
 }
 
-
+time_point<steady_clock> last_update;
 bool update() {
     tb_clear();
 
+    time_point<steady_clock> this_update = steady_clock::now();
+    float dt = duration_cast<milliseconds>(this_update - last_update).count() / 1000.0f;
+    last_update = this_update;
+
     for(snake * s : {&player1, &player2}) {
         switch(s->d) {
-            case UP:    s->pos.y -= 1; break;
-            case DOWN:  s->pos.y += 1; break;
-            case LEFT:  s->pos.x -= 2; break;
-            case RIGHT: s->pos.x += 2; break;
+            case UP:    s->pos.y -= 1 * dt * BASE_SPEED; break;
+            case DOWN:  s->pos.y += 1 * dt * BASE_SPEED; break;
+            case LEFT:  s->pos.x -= 2 * dt * BASE_SPEED; break;
+            case RIGHT: s->pos.x += 2 * dt * BASE_SPEED; break;
         }
 
         tb_change_cell(s->pos.x, s->pos.y, '#', s->head_color, BACKGROUND);
@@ -125,6 +129,7 @@ int main() {
     player1.body_color = TB_YELLOW;
     player2.head_color = TB_MAGENTA;
 
+    last_update = steady_clock::now();
     while(process_input() && update()) {
         // keep running until error or exit
     }
