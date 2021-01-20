@@ -105,6 +105,10 @@ bool update() {
             case LEFT:  new_pos.x -= 2 * speed; break;
             case RIGHT: new_pos.x += 2 * speed; break;
         }
+        if(new_pos.x < 0) new_pos.x = tb_width() - 1;
+        if(new_pos.y < 0) new_pos.y = tb_height() - 1;
+        if(new_pos.x >= tb_width())  new_pos.x = 0;
+        if(new_pos.y >= tb_height()) new_pos.y = 0;
 
         point p = {s->pos.x, s->pos.y};
         while( (int)p.x != (int)new_pos.x || (int)p.y != (int)new_pos.y ) {
@@ -114,6 +118,12 @@ bool update() {
                 case LEFT:  p.x -= 1; break;
                 case RIGHT: p.x += 1; break;
             }
+
+            if(p.x < 0) p.x = tb_width() - 1;
+            if(p.y < 0) p.y = tb_height() - 1;
+            if(p.x >= tb_width())  p.x = 0;
+            if(p.y >= tb_height()) p.y = 0;
+
             s->body.push_back( {p, this_update} );
         }
         s->pos=new_pos;
