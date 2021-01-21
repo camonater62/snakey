@@ -87,7 +87,10 @@ void reset() {
     player2.body.push_back({p_p2, last_update});
 
     player1.length = 0.5f;
-    player2.length = 0.5f;    
+    player2.length = 0.5f;   
+
+    player1.boost = false;
+    player2.boost = false; 
 
     fruits.clear();
 }
