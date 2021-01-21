@@ -1,6 +1,7 @@
 #include <vector>
 #include <map>
 #include <chrono>
+#include <string>
 
 #include <termbox.h>
 
@@ -15,6 +16,9 @@ const float    MIN_LENGTH  = 0.25;
 
 const uint16_t FRUIT_COLOR = TB_RED;
 const uint16_t BACKGROUND  = TB_BLACK;
+
+string win_message;
+uint16_t message_color;
 
 enum direction {
     UP,
@@ -60,6 +64,13 @@ snake player2;
 
 time_point<steady_clock> last_update;
 void reset() {
+    tb_clear();
+
+    win_message = "Player x Wins!";
+    message_color = TB_DEFAULT;
+
+    last_update = steady_clock::now();
+
     float width  = (float)tb_width();
     float height = (float)tb_height();
 
@@ -69,10 +80,16 @@ void reset() {
     player1.pos = p_p1;
     player2.pos = p_p2;
 
-    player1.length = 0.5f;
-    player2.length = 0.5f;
+    player1.d = RIGHT;
+    player2.d = LEFT;
 
-    last_update = steady_clock::now();
+    player1.body.push_back({p_p1, last_update});
+    player2.body.push_back({p_p2, last_update});
+
+    player1.length = 0.5f;
+    player2.length = 0.5f;    
+
+    fruits.clear();
 }
 
 void init() {
@@ -84,15 +101,11 @@ void init() {
     player1.controls[RIGHT] = 'd';
     player1.controls[BOOST] = 'r';
 
-    player1.d = RIGHT;
-
     player2.controls[UP]    = 'i';
     player2.controls[LEFT]  = 'j';
     player2.controls[DOWN]  = 'k';
     player2.controls[RIGHT] = 'l';
     player2.controls[BOOST] = 'u';
-
-    player2.d = LEFT;
 
     player1.head_color = TB_YELLOW;
     player1.body_color = TB_GREEN;
@@ -103,13 +116,16 @@ void init() {
     reset();
 }
 
-bool process_input() {
+//  0 - ok
+// -1 - quit
+//  1 - reset
+int process_input() {
     tb_event event;
 
-    int val = tb_peek_event(&event, 1);
+    int val = tb_peek_event(&event, 10);
 
     if(val < 0) {
-        return false;
+        return -1;
     }
 
     if(val > 0) {
@@ -118,11 +134,12 @@ bool process_input() {
             uint16_t key = event.key;
 
             if(key == TB_KEY_ESC || key == TB_KEY_CTRL_C) {
-                return false;
+                return -1;
             }
 
             if(key == TB_KEY_END) {
                 reset();
+                return 1;
             }
 
             for(snake * s : {&player1, &player2}) {
@@ -135,27 +152,26 @@ bool process_input() {
             }
 
         } else if(event.type == TB_EVENT_RESIZE) {
-            return false;
+            return -1;
         }
     }
 
-    return true;
+    return 0;
 }
 
 bool update() {
-    tb_clear();
-
     time_point<steady_clock> this_update = steady_clock::now();
     float dt = duration_cast<milliseconds>(this_update - last_update).count() / 1000.0f;
     last_update = this_update;
 
+    int id = 1;
     for(snake * s : {&player1, &player2}) {
         point new_pos = {s->pos.x, s->pos.y};
         float speed = dt * BASE_SPEED;
         if(s->boost) {
             if(s->length > MIN_LENGTH) {
                 speed *= BOOST_MOD;
-                s->length -= dt;
+                s->length -= 2 * dt;
             } else {
                 s->boost = false;
             }
@@ -198,18 +214,31 @@ bool update() {
                 fruits.erase(fruits.begin() + i--);
             }
         }
+        snake * other = (s == &player1) ? &player2 : &player1;
 
         for(int i = s->body.size() - 1; i >= 0; i--) {
             body_part bp = s->body[i];
             if(duration_cast<milliseconds>(this_update - bp.time).count() > 1000.0f * s->length) {
                 s->body.erase(s->body.begin() + i--);
+                tb_change_cell(bp.pos.x, bp.pos.y, ' ', BACKGROUND, BACKGROUND);
             } else {
                 tb_change_cell(bp.pos.x, bp.pos.y, '#', s->body_color, BACKGROUND);
+
+                if(int(other->pos.x) == int(bp.pos.x) && int(other->pos.y) == int(bp.pos.y)) {
+                    tb_change_cell(player1.pos.x, player1.pos.y, '#', player1.head_color, BACKGROUND);
+                    tb_change_cell(player2.pos.x, player2.pos.y, '#', player2.head_color, BACKGROUND);
+
+                    win_message = "Player " + to_string(id) + " Wins!";
+                    message_color = s->head_color;
+
+                    return false;
+                }
             }
-           
         }
            
         tb_change_cell(s->pos.x, s->pos.y, '#', s->head_color, BACKGROUND);
+
+        id++;
     }
 
     while(fruits.size() < NUM_FRUITS) {
@@ -226,9 +255,27 @@ bool update() {
 int main() {
     tb_init();
     init();
-    while(process_input() && update()) {
-        tb_present();
+    int input = 0;
+    while(input >= 0) {
+        input = process_input();
+                
+        if(!update()) {
+            int xpos = tb_width() / 2 - win_message.length() / 2;
+
+            for(int x = 0; x < win_message.length(); x++) {
+                tb_change_cell(xpos + x, 3, win_message[x], message_color, BACKGROUND);
+            }
+
+            tb_present();
+            while(input == 0) {
+                input = process_input();
+                
+            }
+        } else {
+            tb_present();
+        }
     }
+        
     tb_shutdown();
 
     return 0;
