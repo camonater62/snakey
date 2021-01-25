@@ -2,20 +2,21 @@
 #include <map>
 #include <chrono>
 #include <string>
+#include <iostream>
 
 #include <termbox.h>
 
 using namespace std;
 using namespace chrono;
 
-const float    BASE_SPEED  = 30.0f;
+const float    BASE_SPEED  = 25.0f;
 const float    BOOST_MOD   = 4.0f;
 const float    FRUIT_VALUE = 0.1f;
 const int      NUM_FRUITS  = 2;
 const float    MIN_LENGTH  = 0.25;
 
 const uint16_t FRUIT_COLOR = TB_RED;
-const uint16_t BACKGROUND  = TB_BLACK;
+const uint16_t BACKGROUND  = TB_DEFAULT;
 
 string win_message;
 uint16_t message_color;
@@ -110,7 +111,7 @@ void init() {
     player2.controls[RIGHT] = 'l';
     player2.controls[BOOST] = 'u';
 
-    player1.head_color = TB_YELLOW;
+    player1.head_color = TB_RED;
     player1.body_color = TB_GREEN;
 
     player2.head_color = TB_CYAN;
@@ -125,7 +126,7 @@ void init() {
 int process_input() {
     tb_event event;
 
-    int val = tb_peek_event(&event, 10);
+    int val = tb_peek_event(&event, 1);
 
     if(val < 0) {
         return -1;
@@ -214,6 +215,7 @@ bool update() {
             fruit f = fruits[i];
             if(int(s->pos.x) == int(f.pos.x) && int(s->pos.y) == int(f.pos.y)) {
                 s->length += FRUIT_VALUE;
+				cout << "\a";
                 fruits.erase(fruits.begin() + i--);
             }
         }
