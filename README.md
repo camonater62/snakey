@@ -1,6 +1,19 @@
-TODO
-what's up snake fans :smirk:
-this is snake perfection 2 PLAYER MADNESS!!! :fu: :fu: :fu:
-for REAL MEN :two_men_holding_hands:
+# Snakey
+### A multiplayer console snake game.
 
-Multiple authors helped me write this text. That is why this text is so nice to read and why I am worthy of the GitHub co-authored commit achievement.
+![Snakey Screenshot](./screenshot.png)
+
+## Requirements
+- [Termbox](https://github.com/nsf/termbox)
+
+## Controls
+### Player 1
+- `WASD` to move
+- `R` to toggle boost
+### Player 2
+- `IJLK` to move
+- `U` to toggle boost
+
+## Additional Notes
+- Play online by using tmux and ssh!
+- Currently WSL1 is incompatable with Termbox. If you want to use this program through WSL, please upgrade to WSL2.
