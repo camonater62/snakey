@@ -75,8 +75,8 @@ void reset() {
     float width  = (float)tb_width();
     float height = (float)tb_height();
 
-    point p_p1 = { width / 3,     height / 2};
-    point p_p2 = { 3 * width / 4, height / 2 };
+    point p_p1 = { width / 3,     height / 4};
+    point p_p2 = { 3 * width / 4, 3 * height / 4 };
 
     player1.pos = p_p1;
     player2.pos = p_p2;
@@ -88,10 +88,10 @@ void reset() {
     player2.body.push_back({p_p2, last_update});
 
     player1.length = 0.5f;
-    player2.length = 0.5f;   
+    player2.length = 0.5f;
 
     player1.boost = false;
-    player2.boost = false; 
+    player2.boost = false;
 
     fruits.clear();
 }
@@ -179,7 +179,7 @@ bool update() {
             } else {
                 s->boost = false;
             }
-            
+
         }
 
         switch(s->d) {
@@ -240,7 +240,7 @@ bool update() {
                 }
             }
         }
-           
+
         tb_change_cell(s->pos.x, s->pos.y, '#', s->head_color, BACKGROUND);
 
         id++;
@@ -263,7 +263,7 @@ int main() {
     int input = 0;
     while(input >= 0) {
         input = process_input();
-                
+
         if(!update()) {
             int xpos = tb_width() / 2 - win_message.length() / 2;
 
@@ -274,13 +274,13 @@ int main() {
             tb_present();
             while(input == 0) {
                 input = process_input();
-                
+
             }
         } else {
             tb_present();
         }
     }
-        
+
     tb_shutdown();
 
     return 0;
